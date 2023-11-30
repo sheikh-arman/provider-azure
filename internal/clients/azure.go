@@ -15,7 +15,7 @@ import (
 
 	"github.com/crossplane/upjet/pkg/terraform"
 
-	"github.com/upbound/upjet-provider-template/apis/v1beta1"
+	"github.com/sheikh-arman/provider-azure/apis/v1beta1"
 )
 
 const (
@@ -24,7 +24,21 @@ const (
 	errGetProviderConfig    = "cannot get referenced ProviderConfig"
 	errTrackUsage           = "cannot track ProviderConfig usage"
 	errExtractCredentials   = "cannot extract credentials"
-	errUnmarshalCredentials = "cannot unmarshal template credentials as JSON"
+	errUnmarshalCredentials = "cannot unmarshal azure credentials as JSON"
+
+	// Azure service principal credentials file JSON keys
+	keyAzureSubscriptionID = "subscriptionId"
+	keyAzureClientID       = "clientId"
+	keyAzureClientSecret   = "clientSecret"
+	keyAzureTenantID       = "tenantId"
+	// Terraform Provider configuration block keys
+	keyClientID       = "client_id"
+	keySubscriptionID = "subscription_id"
+	keyTenantID       = "tenant_id"
+	keyClientSecret   = "client_secret"
+
+	keyTerraformFeatures        = "features"
+	keySkipProviderRegistration = "skip_provider_registration"
 )
 
 // TerraformSetupBuilder builds Terraform a terraform.SetupFn function which
@@ -62,11 +76,37 @@ func TerraformSetupBuilder(version, providerSource, providerVersion string) terr
 			return ps, errors.Wrap(err, errUnmarshalCredentials)
 		}
 
-		// Set credentials in Terraform provider configuration.
-		/*ps.Configuration = map[string]any{
-			"username": creds["username"],
-			"password": creds["password"],
-		}*/
+		ps.Configuration = map[string]interface{}{
+			keyTerraformFeatures: struct{}{},
+			// Terraform AzureRM provider tries to register all resource providers
+			// in Azure just in case if the provider of the resource you're
+			// trying to create is not registered and the returned error is
+			// ambiguous. However, this requires service principal to have provider
+			// registration permissions which are irrelevant in most contexts.
+			// For details, see https://github.com/upbound/provider-azure/issues/104
+			keySkipProviderRegistration: true,
+		}
+		// using spAuth for azure authentication
+		if _, ok := creds[keyAzureSubscriptionID]; ok {
+			ps.Configuration[keySubscriptionID] = creds[keyAzureSubscriptionID]
+		} else {
+			return ps, errors.New("invalid subscription id")
+		}
+		if _, ok := creds[keyAzureTenantID]; ok {
+			ps.Configuration[keyTenantID] = creds[keyAzureTenantID]
+		} else {
+			return ps, errors.New("invalid tenant id")
+		}
+		if _, ok := creds[keyAzureClientID]; ok {
+			ps.Configuration[keyClientID] = creds[keyAzureClientID]
+		} else {
+			return ps, errors.New("invalid client id")
+		}
+		if _, ok := creds[keyAzureClientSecret]; ok {
+			ps.Configuration[keyClientSecret] = creds[keyAzureClientSecret]
+		} else {
+			return ps, errors.New("invalid client secret")
+		}
 		return ps, nil
 	}
 }

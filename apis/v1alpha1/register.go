@@ -13,7 +13,7 @@ import (
 
 // Package type metadata.
 const (
-	Group   = "template.upbound.io"
+	Group   = "azure.azure.kubedb.com"
 	Version = "v1alpha1"
 )
 
