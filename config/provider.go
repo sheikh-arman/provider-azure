@@ -8,6 +8,7 @@ import (
 	// Note(turkenh): we are importing this to embed provider schema document
 	_ "embed"
 	"github.com/sheikh-arman/provider-azure/config/base"
+	"github.com/sheikh-arman/provider-azure/config/cache"
 
 	ujconfig "github.com/crossplane/upjet/pkg/config"
 )
@@ -33,9 +34,14 @@ func GetProvider() *ujconfig.Provider {
 			ExternalNameConfigurations(),
 		))
 
+	// API group overrides from Terraform import statements
+	for _, r := range pc.Resources {
+		groupKindOverride(r)
+	}
 	for _, configure := range []func(provider *ujconfig.Provider){
 		// add custom config functions
 		base.Configure,
+		cache.Configure,
 	} {
 		configure(pc)
 	}
