@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
-  name: storeconfigs.azure.azure.kubedb.com
+  name: storeconfigs.azure.kubedb.com
 spec:
-  group: azure.azure.kubedb.com
+  group: azure.kubedb.com
   names:
     categories:
     - crossplane

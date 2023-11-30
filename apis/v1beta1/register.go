@@ -13,7 +13,7 @@ import (
 
 // Package type metadata.
 const (
-	Group   = "azure.azure.kubedb.com"
+	Group   = "azure.kubedb.com"
 	Version = "v1beta1"
 )
 
